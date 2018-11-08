@@ -1,4 +1,5 @@
 import setupKeyboard, { keyCodes } from "./keyboard.js";
+import { createGround, createWorld, bodies } from "./creators.js";
 import * as PIXI from "pixi.js";
 import * as planck from "planck-js";
 
@@ -35,7 +36,7 @@ window.addEventListener("resize", () => {
 
 const container = new PIXI.Container();
 app.stage.addChild(container);
-container.scale.set(0.1);
+// container.scale.set(0.1);
 
 const {
   Vec2,
@@ -48,54 +49,66 @@ const {
   Polygon
 } = planck;
 
-const world = new World({
-  gravity: Vec2(0, -10)
-});
-
 const SPEED = 15.0;
 
-const ground = world.createBody(Vec2(0, -10));
+const world = createWorld(10);
 
-const groundFD = {
-  density: 0.0,
-  friction: 0.6
-};
+function createLevel(world) {
+  const addGroundFixture = createGround(world, 0, -10);
+  const fixtureContainer = new PIXI.Container();
+  fixtureContainer.x = 0;
+  fixtureContainer.y = 10;
 
-ground.createFixture(Edge(Vec2(-20.0, 0.0), Vec2(20.0, 0.0)), groundFD);
+  function addFixture(x1, y1, x2, y2) {
+    addGroundFixture(x1, y1, x2, y2);
+    const g = new PIXI.Graphics();
+    g.lineStyle(2, 0xffffff);
+    g.moveTo(x1, -y1);
+    g.lineTo(x2, -y2);
 
-const hs = [0.25, 1.0, 4.0, 0.0, 0.0, -1.0, -2.0, -2.0, -1.25, 0.0];
+    fixtureContainer.addChild(g);
+  }
 
-let x = 20.0,
-  y1 = 0.0,
-  dx = 5.0;
+  addFixture(-20, 0, 20, 0);
 
-for (let i = 0; i < 10; ++i) {
-  const y2 = hs[i];
-  ground.createFixture(Edge(Vec2(x, y1), Vec2(x + dx, y2)), groundFD);
-  y1 = y2;
-  x += dx;
+  const hs = [0.25, 1.0, 4.0, 0.0, 0.0, -1.0, -2.0, -2.0, -1.25, 0.0];
+
+  let x = 20.0;
+  let y1 = 0.0;
+  let dx = 5.0;
+
+  for (let i = 0; i < 10; ++i) {
+    const y2 = hs[i];
+    addFixture(x, y1, x + dx, y2);
+    y1 = y2;
+    x += dx;
+  }
+
+  for (let i = 0; i < 10; ++i) {
+    const y2 = hs[i];
+    addFixture(x, y1, x + dx, y2);
+    y1 = y2;
+    x += dx;
+  }
+
+  addFixture(x, 0.0, x + 40.0, 0.0);
+
+  x += 80.0;
+  addFixture(x, 0.0, x + 40.0, 0.0);
+
+  x += 40.0;
+  addFixture(x, 0.0, x + 10.0, 5.0);
+
+  x += 20.0;
+  addFixture(x, 0.0, x + 40.0, 0.0);
+
+  x += 40.0;
+  addFixture(x, 0.0, x, 20.0);
+
+  return fixtureContainer;
 }
 
-for (let i = 0; i < 10; ++i) {
-  const y2 = hs[i];
-  ground.createFixture(Edge(Vec2(x, y1), Vec2(x + dx, y2)), groundFD);
-  y1 = y2;
-  x += dx;
-}
-
-ground.createFixture(Edge(Vec2(x, 0.0), Vec2(x + 40.0, 0.0)), groundFD);
-
-x += 80.0;
-ground.createFixture(Edge(Vec2(x, 0.0), Vec2(x + 40.0, 0.0)), groundFD);
-
-x += 40.0;
-ground.createFixture(Edge(Vec2(x, 0.0), Vec2(x + 10.0, 5.0)), groundFD);
-
-x += 20.0;
-ground.createFixture(Edge(Vec2(x, 0.0), Vec2(x + 40.0, 0.0)), groundFD);
-
-x += 40.0;
-ground.createFixture(Edge(Vec2(x, 0.0), Vec2(x, 20.0)), groundFD);
+container.addChild(createLevel(world));
 
 // Teeter
 // const teeter = world.createDynamicBody(Vec2(140.0, 1.0));
@@ -212,12 +225,6 @@ world.createJoint(
 
 // gameLoop();
 
-const g = new PIXI.Graphics();
-
-container.addChild(g);
-container.x = 300;
-container.y = 200;
-
 function gameLoop(delta) {
   world.step(1 / 60);
 
@@ -232,59 +239,15 @@ function gameLoop(delta) {
     // springBack.enableMotor(false);
   }
 
-  // if (window._keys[keyCodes["LEFT"]]) {
-  //   car.applyAngularImpulse(7);
-  // } else if (window._keys[keyCodes["RIGHT"]]) {
-  //   car.applyAngularImpulse(-7);
-  // }
-
-  g.clear();
-  g.lineStyle(4, 0xffffff);
-  // g.beginFill(0x5cafe2);
-  for (let b = world.getBodyList(); b; b = b.getNext()) {
-    for (let f = b.getFixtureList(); f; f = f.getNext()) {
-      const type = f.getType();
-      const shape = f.getShape();
-      const { x, y } = b.getPosition();
-      const angle = b.getAngle();
-      // console.log(type);
-
-      // console.log(b.getPosition());
-
-      // if (x && y) {
-      //   g.x = x;
-      //   g.y = y;
-      // }
-
-      // g.rotation = angle * Math.PI;
-
-      // g.rotation = -angle;
-
-      if (type === "polygon") {
-        // TODO: Fix angle rotation
-        g.moveTo(
-          mpx(x + shape.m_vertices[0].x),
-          mpx(-y - shape.m_vertices[0].y)
-        );
-        for (let i = 1; i < shape.m_vertices.length; i++) {
-          g.lineTo(
-            mpx(x + shape.m_vertices[i].x),
-            mpx(-y - shape.m_vertices[i].y)
-          );
-        }
-        g.closePath();
-        // g.stroke();
-        // g.drawPolygon([0, 0, 10, 0, 10, 10, 0, 10]);
-      } else if (type === "edge") {
-        // console.log(shape);
-        g.moveTo(mpx(x + shape.m_vertex1.x), mpx(-y - shape.m_vertex1.y));
-        g.lineTo(mpx(x + shape.m_vertex2.x), mpx(-y - shape.m_vertex2.y));
-      } else if (type === "circle") {
-        g.drawCircle(mpx(x), mpx(-y), mpx(shape.m_radius));
-      }
-    }
+  if (window._keys[keyCodes["LEFT"]]) {
+    car.applyAngularImpulse(7);
+  } else if (window._keys[keyCodes["RIGHT"]]) {
+    car.applyAngularImpulse(-7);
   }
-  g.endFill();
+
+  // for (let body of bodies) {
+  //   body
+  // }
 
   app.render();
 }
@@ -294,7 +257,7 @@ app.ticker.add(function(delta) {
 });
 
 setTimeout(() => {
-  // app.stop();
+  app.stop();
 }, 1500);
 
 // setInterval(() => gameLoop(1), 1000);
