@@ -1,23 +1,28 @@
 import setupKeyboard, { keyCodes } from "./keyboard.js";
-import { createGround, createWorld, bodies } from "./creators.js";
+import {
+  createGround,
+  createWorld,
+  createMotorcycle,
+  mpx,
+  actors,
+  createBridge
+} from "./creators.js";
 import * as PIXI from "pixi.js";
-import * as planck from "planck-js";
 
 import "./style.css";
+
+// @ts-ignore
+if (module.hot) {
+  // @ts-ignore
+  module.hot.dispose(() => {
+    window.location.reload();
+    throw "whatever";
+  });
+}
 
 PIXI.utils.skipHello();
 
 setupKeyboard();
-
-const pscale = 100;
-
-function mpx(m) {
-  return m * pscale;
-}
-
-function pxm(p) {
-  return p / pscale;
-}
 
 const renderOptions = {
   backgroundColor: 0x000000,
@@ -36,40 +41,23 @@ window.addEventListener("resize", () => {
 
 const container = new PIXI.Container();
 app.stage.addChild(container);
-// container.scale.set(0.1);
+container.scale.x = 1;
+container.scale.y = 1;
+container.scale.y = -container.scale.y; // Invert because of physics
+container.position.set(
+  app.renderer.screen.width / 2,
+  app.renderer.screen.height / 2
+);
 
-const {
-  Vec2,
-  World,
-  Edge,
-  Circle,
-  Box,
-  RevoluteJoint,
-  WheelJoint,
-  Polygon
-} = planck;
-
-const SPEED = 15.0;
+const SPEED = 50.0;
+const ROTATE_SPEED = 0.1;
 
 const world = createWorld(10);
 
 function createLevel(world) {
-  const addGroundFixture = createGround(world, 0, -10);
-  const fixtureContainer = new PIXI.Container();
-  fixtureContainer.x = 0;
-  fixtureContainer.y = 10;
+  const [ground, addGroundFixture] = createGround(world, 0, -10);
 
-  function addFixture(x1, y1, x2, y2) {
-    addGroundFixture(x1, y1, x2, y2);
-    const g = new PIXI.Graphics();
-    g.lineStyle(2, 0xffffff);
-    g.moveTo(x1, -y1);
-    g.lineTo(x2, -y2);
-
-    fixtureContainer.addChild(g);
-  }
-
-  addFixture(-20, 0, 20, 0);
+  addGroundFixture(-20, 0, 20, 0);
 
   const hs = [0.25, 1.0, 4.0, 0.0, 0.0, -1.0, -2.0, -2.0, -1.25, 0.0];
 
@@ -79,36 +67,38 @@ function createLevel(world) {
 
   for (let i = 0; i < 10; ++i) {
     const y2 = hs[i];
-    addFixture(x, y1, x + dx, y2);
+    addGroundFixture(x, y1, x + dx, y2);
     y1 = y2;
     x += dx;
   }
 
   for (let i = 0; i < 10; ++i) {
     const y2 = hs[i];
-    addFixture(x, y1, x + dx, y2);
+    addGroundFixture(x, y1, x + dx, y2);
     y1 = y2;
     x += dx;
   }
 
-  addFixture(x, 0.0, x + 40.0, 0.0);
+  addGroundFixture(x, 0.0, x + 40.0, 0.0);
 
   x += 80.0;
-  addFixture(x, 0.0, x + 40.0, 0.0);
+  addGroundFixture(x, 0.0, x + 40.0, 0.0);
 
   x += 40.0;
-  addFixture(x, 0.0, x + 10.0, 5.0);
+  addGroundFixture(x, 0.0, x + 10.0, 5.0);
 
   x += 20.0;
-  addFixture(x, 0.0, x + 40.0, 0.0);
+  addGroundFixture(x, 0.0, x + 40.0, 0.0);
 
   x += 40.0;
-  addFixture(x, 0.0, x, 20.0);
+  addGroundFixture(x, 0.0, x, 20.0);
 
-  return fixtureContainer;
+  createBridge(world, ground);
 }
 
-container.addChild(createLevel(world));
+createLevel(world);
+
+const [motorcycle, motorcycleSpringBack] = createMotorcycle(world, 0, -8);
 
 // Teeter
 // const teeter = world.createDynamicBody(Vec2(140.0, 1.0));
@@ -150,7 +140,7 @@ container.addChild(createLevel(world));
 // );
 
 // Boxes
-const box = Box(0.5, 0.5);
+// const box = Box(0.5, 0.5);
 
 // world.createDynamicBody(Vec2(230.0, 0.5)).createFixture(box, 0.5);
 
@@ -161,103 +151,83 @@ const box = Box(0.5, 0.5);
 // world.createDynamicBody(Vec2(230.0, 3.5)).createFixture(box, 0.5);
 
 // world.createDynamicBody(Vec2(230.0, 4.5)).createFixture(box, 0.5);
+for (let actor of actors) {
+  container.addChild(actor);
+}
 
-const car = world.createDynamicBody(Vec2(0.0, 1.0));
-car.createFixture(
-  Polygon([
-    Vec2(0, 7),
-    Vec2(6, 7),
-    Vec2(7, 5),
-    Vec2(6, 4),
-    Vec2(2, 4),
-    Vec2(1, 5)
-  ]),
-  0.5
-);
+var stats = new Stats();
+stats.setMode(0); // 0: fps, 1: ms
 
-// const carGraphics = new PIXI.Graphics();
-// carGraphics.body = car;
-// carGraphics.beginFill(0xffffff);
-// carGraphics.drawCircle(10, 10, 20);
-// carGraphics.endFill();
+// Align top-left
+stats.domElement.style.position = "absolute";
+stats.domElement.style.right = "0";
+stats.domElement.style.top = "0";
 
-// app.stage.addChild(carGraphics);
+document.body.appendChild(stats.domElement);
 
-const wheelFD = {};
-wheelFD.density = 0.4;
-wheelFD.friction = 1;
-wheelFD.restitution = 0.5;
-
-const wheelBack = world.createDynamicBody(Vec2(1, 5));
-wheelBack.createFixture(Circle(1.5), wheelFD);
-
-const wheelFront = world.createDynamicBody(Vec2(7, 5));
-wheelFront.createFixture(Circle(1.5), wheelFD);
-
-const springBack = world.createJoint(
-  WheelJoint(
-    {
-      motorSpeed: 0,
-      maxMotorTorque: 500.0,
-      enableLimit: true,
-      enableMotor: true
-    },
-    car,
-    wheelBack,
-    wheelBack.getPosition(),
-    Vec2(0.0, 1.0)
-  )
-);
-
-world.createJoint(
-  WheelJoint(
-    {
-      motorSpeed: 0.0,
-      maxMotorTorque: 40.0,
-      enableMotor: false
-    },
-    car,
-    wheelFront,
-    wheelFront.getPosition(),
-    Vec2(0.0, 1.0)
-  )
-);
-
-// gameLoop();
-
-function gameLoop(delta) {
-  world.step(1 / 60);
-
+function inputLoop() {
   if (window._keys[keyCodes["UP"]]) {
-    springBack.enableMotor(true);
-    springBack.setMotorSpeed(-SPEED);
+    motorcycleSpringBack.enableMotor(true);
+    motorcycleSpringBack.setMotorSpeed(-SPEED);
   } else if (window._keys[keyCodes["DOWN"]]) {
-    springBack.enableMotor(true);
-    springBack.setMotorSpeed(+SPEED);
+    motorcycleSpringBack.enableMotor(true);
+    motorcycleSpringBack.setMotorSpeed(+SPEED);
   } else {
-    // springBack.setMotorSpeed(0);
-    // springBack.enableMotor(false);
+    motorcycleSpringBack.setMotorSpeed(0);
+    motorcycleSpringBack.enableMotor(false);
+  }
+
+  if (window._keys[keyCodes["SPACE"]]) {
+    if (app.ticker.started) {
+      app.ticker.stop();
+    } else {
+      app.ticker.start();
+    }
   }
 
   if (window._keys[keyCodes["LEFT"]]) {
-    car.applyAngularImpulse(7);
+    motorcycle.applyAngularImpulse(ROTATE_SPEED);
   } else if (window._keys[keyCodes["RIGHT"]]) {
-    car.applyAngularImpulse(-7);
+    motorcycle.applyAngularImpulse(-ROTATE_SPEED);
   }
-
-  // for (let body of bodies) {
-  //   body
-  // }
-
-  app.render();
 }
 
+function physicsLoop() {
+  world.step(1 / 60, app.ticker.elapsedMS / 1000);
+}
+
+function renderLoop() {
+  stats.begin();
+
+  for (let actor of actors) {
+    const { x, y } = actor.body.getPosition();
+    const angle = actor.body.getAngle();
+    actor.position.x = mpx(x);
+    actor.position.y = mpx(y);
+    actor.rotation = angle;
+  }
+
+  const { x, y } = motorcycle.getPosition();
+
+  container.pivot.x = (mpx(x) - container.pivot.x) * 0.1 + container.pivot.x;
+  container.pivot.y = (mpx(y) - container.pivot.y) * 0.1 + container.pivot.y;
+
+  stats.end();
+}
+
+const inputTicker = new PIXI.ticker.Ticker();
+inputTicker.autoStart = true;
+inputTicker.add(function(delta) {
+  inputLoop();
+});
+
 app.ticker.add(function(delta) {
-  gameLoop(delta);
+  physicsLoop();
+  renderLoop();
 });
 
 setTimeout(() => {
-  app.stop();
+  // app.stop();
 }, 1500);
 
 // setInterval(() => gameLoop(1), 1000);
