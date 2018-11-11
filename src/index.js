@@ -27,7 +27,7 @@ setupKeyboard();
 const renderOptions = {
   backgroundColor: 0x000000,
   autoResize: true,
-  resolution: window.devicePixelRatio,
+  resolution: 1,
   antialias: true
 };
 
