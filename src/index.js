@@ -210,9 +210,15 @@ function renderLoop() {
   }
 
   const { x, y } = motorcycle.getPosition()
+  const { x: x2, y: y2 } = motorcycle2.getPosition()
 
-  container.pivot.x = (mpx(x) - container.pivot.x) * 0.1 + container.pivot.x
-  container.pivot.y = (mpx(y) - container.pivot.y) * 0.1 + container.pivot.y
+  const distance = Math.abs(x - x2)
+  const scale = Math.min(1, app.renderer.width / mpx(distance * 1.25))
+  container.scale.x = scale
+  container.scale.y = -scale
+
+  container.pivot.x = mpx(Math.min(x, x2) + distance / 2)
+  container.pivot.y = mpx(Math.min(y, y2) + Math.abs(y - y2) / 2)
 
   stats.end()
 }
