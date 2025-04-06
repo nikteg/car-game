@@ -1,5 +1,6 @@
 services:
   car-game:
     build: .
+    pull_policy: build
     container_name: car-game
     restart: unless-stopped
