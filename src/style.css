@@ -5,6 +5,10 @@ body {
   height: 100vh;
 }
 
+body {
+  display: flex;;
+}
+
 canvas {
   image-rendering: optimizeSpeed;
   /* image-rendering: crisp-edges;

@@ -10,7 +10,7 @@ setupKeyboard()
 const renderOptions = {
   backgroundColor: 0x000000,
   autoResize: true,
-  resolution: 1,
+  resolution: window.devicePixelRatio,
   antialias: true,
 }
 
@@ -135,6 +135,7 @@ const { body: motorcycle2, springBack: motorcycle2SpringBack } = createMotorcycl
 // world.createDynamicBody(Vec2(230.0, 3.5)).createFixture(box, 0.5);
 
 // world.createDynamicBody(Vec2(230.0, 4.5)).createFixture(box, 0.5);
+
 for (let actor of actors) {
   container.addChild(actor)
 }
@@ -219,15 +220,9 @@ const inputTicker = new PIXI.Ticker()
 inputTicker.autoStart = true
 inputTicker.add(function (delta) {
   inputLoop()
+  physicsLoop()
 })
 
 app.ticker.add(function (delta) {
-  physicsLoop()
   renderLoop()
 })
-
-setTimeout(() => {
-  // app.stop();
-}, 1500)
-
-// setInterval(() => gameLoop(1), 1000);
