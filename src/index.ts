@@ -1,8 +1,8 @@
-import setupKeyboard, { keyCodes } from "./keyboard.mjs"
-import { createGround, createWorld, createMotorcycle, mpx, actors, createBridge } from "./creators.mjs"
+import { actors, createBridge, createCar, createGround, createWorld, mpx } from "./creators"
+import setupKeyboard, { keyCodes } from "./keyboard"
 import * as PIXI from "pixi.js"
+import { World } from "planck"
 import Stats from "stats.js"
-
 import "./style.css"
 
 setupKeyboard()
@@ -37,7 +37,7 @@ const ROTATE_SPEED = 0.1
 
 const world = createWorld(10)
 
-function createLevel(world) {
+function createLevel(world: World) {
   const { body: ground, addGroundFixture } = createGround(world, 0, -10)
 
   addGroundFixture(-20, 0, 20, 0)
@@ -81,8 +81,8 @@ function createLevel(world) {
 
 createLevel(world)
 
-const { body: motorcycle, springBack: motorcycleSpringBack } = createMotorcycle(world, 0, -8, 0x4db6ac)
-const { body: motorcycle2, springBack: motorcycle2SpringBack } = createMotorcycle(world, 4, -8, 0xe57373)
+const { body: car, springBack: carSpringBack } = createCar(world, 0, -8, 0x4db6ac)
+const { body: car2, springBack: car2SpringBack } = createCar(world, 4, -8, 0xe57373)
 
 // Teeter
 // const teeter = world.createDynamicBody(Vec2(140.0, 1.0));
@@ -146,25 +146,25 @@ document.body.appendChild(stats.dom)
 
 function inputLoop() {
   if (window._keys[keyCodes["UP"]]) {
-    motorcycleSpringBack.enableMotor(true)
-    motorcycleSpringBack.setMotorSpeed(-SPEED)
+    carSpringBack.enableMotor(true)
+    carSpringBack.setMotorSpeed(-SPEED)
   } else if (window._keys[keyCodes["DOWN"]]) {
-    motorcycleSpringBack.enableMotor(true)
-    motorcycleSpringBack.setMotorSpeed(+SPEED)
+    carSpringBack.enableMotor(true)
+    carSpringBack.setMotorSpeed(+SPEED)
   } else {
-    motorcycleSpringBack.setMotorSpeed(0)
-    motorcycleSpringBack.enableMotor(false)
+    carSpringBack.setMotorSpeed(0)
+    carSpringBack.enableMotor(false)
   }
 
   if (window._keys[keyCodes["W"]]) {
-    motorcycle2SpringBack.enableMotor(true)
-    motorcycle2SpringBack.setMotorSpeed(-SPEED)
+    car2SpringBack.enableMotor(true)
+    car2SpringBack.setMotorSpeed(-SPEED)
   } else if (window._keys[keyCodes["S"]]) {
-    motorcycle2SpringBack.enableMotor(true)
-    motorcycle2SpringBack.setMotorSpeed(+SPEED)
+    car2SpringBack.enableMotor(true)
+    car2SpringBack.setMotorSpeed(+SPEED)
   } else {
-    motorcycle2SpringBack.setMotorSpeed(0)
-    motorcycle2SpringBack.enableMotor(false)
+    car2SpringBack.setMotorSpeed(0)
+    car2SpringBack.enableMotor(false)
   }
 
   if (window._keys[keyCodes["SPACE"]]) {
@@ -176,14 +176,14 @@ function inputLoop() {
   }
 
   if (window._keys[keyCodes["LEFT"]]) {
-    motorcycle.applyAngularImpulse(ROTATE_SPEED)
+    car.applyAngularImpulse(ROTATE_SPEED)
   } else if (window._keys[keyCodes["RIGHT"]]) {
-    motorcycle.applyAngularImpulse(-ROTATE_SPEED)
+    car.applyAngularImpulse(-ROTATE_SPEED)
   }
   if (window._keys[keyCodes["A"]]) {
-    motorcycle2.applyAngularImpulse(ROTATE_SPEED)
+    car2.applyAngularImpulse(ROTATE_SPEED)
   } else if (window._keys[keyCodes["D"]]) {
-    motorcycle2.applyAngularImpulse(-ROTATE_SPEED)
+    car2.applyAngularImpulse(-ROTATE_SPEED)
   }
 }
 
@@ -202,8 +202,8 @@ function renderLoop() {
     actor.rotation = angle
   }
 
-  const { x, y } = motorcycle.getPosition()
-  const { x: x2, y: y2 } = motorcycle2.getPosition()
+  const { x, y } = car.getPosition()
+  const { x: x2, y: y2 } = car2.getPosition()
 
   const distance = Math.abs(x - x2)
   const scale = Math.min(1, app.renderer.width / mpx(distance * 1.25))
@@ -218,11 +218,11 @@ function renderLoop() {
 
 const inputTicker = new PIXI.Ticker()
 inputTicker.autoStart = true
-inputTicker.add(function (delta) {
+inputTicker.add((_delta) => {
   inputLoop()
   physicsLoop()
 })
 
-app.ticker.add(function (delta) {
+app.ticker.add((_delta) => {
   renderLoop()
 })

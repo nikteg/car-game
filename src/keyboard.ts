@@ -113,8 +113,8 @@ export const keyCodes = {
   BACK_SLASH: 220,
   CLOSE_BRACKET: 221,
   QUOTE: 222,
-  META: 224
-};
+  META: 224,
+}
 
 export const keyNames = {
   3: "CANCEL",
@@ -231,31 +231,31 @@ export const keyNames = {
   220: "BACK_SLASH",
   221: "CLOSE_BRACKET",
   222: "QUOTE",
-  224: "META"
-};
+  224: "META",
+}
 
 export default function setup(preventDefault = false, context = window) {
-  context._keys = [];
+  context._keys = []
 
-  function setKeysPressed(e, isPressed) {
+  function setKeysPressed(e: KeyboardEvent, isPressed: boolean) {
     // if (e.metaKey || e.ctrlKey || e.altKey) {
     //   return;
     // }
 
     if (keyNames[e.keyCode] != null) {
       if (preventDefault) {
-        e.preventDefault();
+        e.preventDefault()
       }
 
-      context._keys[e.keyCode] = isPressed;
+      context._keys[e.keyCode] = isPressed
     }
   }
 
-  context.addEventListener("keydown", e => {
-    setKeysPressed(e, true);
-  });
+  context.addEventListener("keydown", (e) => {
+    setKeysPressed(e, true)
+  })
 
-  context.addEventListener("keyup", e => {
-    setKeysPressed(e, false);
-  });
+  context.addEventListener("keyup", (e) => {
+    setKeysPressed(e, false)
+  })
 }

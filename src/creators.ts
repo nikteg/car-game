@@ -12,11 +12,11 @@ const LINE_WIDTH = 2
 
 const pscale = 60
 
-export function mpx(m) {
+export function mpx(m: number) {
   return m * pscale
 }
 
-export function pxm(p) {
+export function pxm(p: number) {
   return p / pscale
 }
 
@@ -24,7 +24,7 @@ export function createWorld(verticalGravity = 10) {
   return new World({ gravity: new Vec2(0, -verticalGravity) })
 }
 
-export function createGround(world, x = 0, y = 0) {
+export function createGround(world: World, x = 0, y = 0) {
   const body = world.createBody(new Vec2(x, y))
 
   const groundGraphics = new PIXI.Graphics()
@@ -53,7 +53,7 @@ export function createGround(world, x = 0, y = 0) {
   return { body, addGroundFixture }
 }
 
-export function createBridge(world, ground) {
+export function createBridge(world: World, ground) {
   const bridgeFixtureOptions = {
     density: 1,
     friction: 0.6,
@@ -83,7 +83,7 @@ export function createBridge(world, ground) {
   world.createJoint(new RevoluteJoint({}, prevBody, ground, new Vec2(160.0 + 2.0 * 20, -10.125)))
 }
 
-export function createMotorcycle(world, x = 0, y = 0, color = 0xffffff) {
+export function createCar(world: World, x = 0, y = 0, color = 0xffffff) {
   const body = world.createDynamicBody(new Vec2(x, y))
 
   const bodyFixtureOptions = {
