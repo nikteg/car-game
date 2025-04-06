@@ -1,20 +1,9 @@
-import setupKeyboard, { keyCodes } from "./keyboard.js"
-import { createGround, createWorld, createMotorcycle, mpx, actors, createBridge } from "./creators.js"
+import setupKeyboard, { keyCodes } from "./keyboard.mjs"
+import { createGround, createWorld, createMotorcycle, mpx, actors, createBridge } from "./creators.mjs"
 import * as PIXI from "pixi.js"
 import Stats from "stats.js"
 
 import "./style.css"
-
-// @ts-ignore
-if (module.hot) {
-  // @ts-ignore
-  module.hot.dispose(() => {
-    window.location.reload()
-    throw "whatever"
-  })
-}
-
-PIXI.utils.skipHello()
 
 setupKeyboard()
 
@@ -25,9 +14,12 @@ const renderOptions = {
   antialias: true,
 }
 
-const app = new PIXI.Application(renderOptions)
+const app = new PIXI.Application()
+
+await app.init(renderOptions)
+
 app.renderer.resize(document.body.clientWidth, document.body.clientHeight)
-document.body.appendChild(app.view)
+document.body.appendChild(app.canvas)
 
 window.addEventListener("resize", () => {
   app.renderer.resize(document.body.clientWidth, document.body.clientHeight)
@@ -223,13 +215,13 @@ function renderLoop() {
   stats.end()
 }
 
-const inputTicker = new PIXI.ticker.Ticker()
+const inputTicker = new PIXI.Ticker()
 inputTicker.autoStart = true
-inputTicker.add(function(delta) {
+inputTicker.add(function (delta) {
   inputLoop()
 })
 
-app.ticker.add(function(delta) {
+app.ticker.add(function (delta) {
   physicsLoop()
   renderLoop()
 })
