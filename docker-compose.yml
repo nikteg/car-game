@@ -1,0 +1,5 @@
+services:
+  car-game:
+    build: .
+    container_name: car-game
+    restart: unless-stopped
