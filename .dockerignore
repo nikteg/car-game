@@ -1,5 +1,4 @@
 *.sh
-CNAME
 .vscode
 .DS_Store
 .AppleDouble
